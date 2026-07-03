@@ -1,21 +1,27 @@
 /**
  * Google Apps Script — gắn vào Google Sheet thiệp cưới
  *
- * Cách dùng:
- * 1. Tạo Google Sheet mới
- * 2. Extensions → Apps Script → dán toàn bộ file này
- * 3. Chạy hàm setupSheets() một lần (cho phép quyền)
- * 4. Deploy → New deployment → Web app
- *    - Execute as: Me
- *    - Who has access: Anyone (Bất kỳ ai — KHÔNG chọn "Anyone with Google account")
- * 5. Copy URL deployment → dán vào VITE_GOOGLE_SHEETS_URL
+ * QUAN TRỌNG: Web App KHÔNG dùng được getActiveSpreadsheet().
+ * Phải khai báo SPREADSHEET_ID (lấy từ URL Sheet).
+ *
+ * Sau khi dán code:
+ * 1. Chạy setupSheets() một lần
+ * 2. Deploy → New deployment → Web app (Execute as: Me, Anyone)
+ * 3. Copy URL /exec → VITE_GOOGLE_SHEETS_URL trên Vercel
  */
+
+// ← ID Sheet của bạn (từ URL docs.google.com/spreadsheets/d/XXXX/edit)
+const SPREADSHEET_ID = '1GxXQWVRBoClY4hvbHS4jL6rPPac4GiB5TdK-QuLFLHo'
 
 const RSVP_SHEET = 'RSVP'
 const WISHES_SHEET = 'Loi_chuc'
 
+function getSpreadsheet() {
+  return SpreadsheetApp.openById(SPREADSHEET_ID)
+}
+
 function setupSheets() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const ss = getSpreadsheet()
 
   let rsvp = ss.getSheetByName(RSVP_SHEET)
   if (!rsvp) {
@@ -36,6 +42,19 @@ function setupSheets() {
   }
 }
 
+/** Chạy thủ công để test — nếu Sheet có dòng "TEST OK" là đúng */
+function testWrite() {
+  setupSheets()
+  getSpreadsheet().getSheetByName(RSVP_SHEET).appendRow([
+    new Date(),
+    'TEST OK',
+    '',
+    1,
+    'Có',
+    'Chạy testWrite() từ Apps Script',
+  ])
+}
+
 function parsePayload(e) {
   if (e.parameter && e.parameter.payload) {
     return JSON.parse(e.parameter.payload)
@@ -50,7 +69,7 @@ function doPost(e) {
   try {
     setupSheets()
     const data = parsePayload(e)
-    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const ss = getSpreadsheet()
     const now = new Date()
 
     if (data.type === 'rsvp') {
@@ -70,7 +89,7 @@ function doPost(e) {
         'Có',
       ])
     } else {
-      throw new Error('Unknown type')
+      throw new Error('Unknown type: ' + data.type)
     }
 
     return ContentService.createTextOutput(
@@ -85,7 +104,7 @@ function doPost(e) {
 
 function getWishesList() {
   setupSheets()
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(WISHES_SHEET)
+  const sheet = getSpreadsheet().getSheetByName(WISHES_SHEET)
   const rows = sheet.getDataRange().getValues()
   const wishes = []
 
@@ -122,6 +141,6 @@ function doGet(e) {
   }
 
   return ContentService.createTextOutput(
-    JSON.stringify({ ok: true, message: 'Wedding sheet API' }),
+    JSON.stringify({ ok: true, message: 'Wedding sheet API', spreadsheetId: SPREADSHEET_ID }),
   ).setMimeType(ContentService.MimeType.JSON)
 }
