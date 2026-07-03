@@ -2,19 +2,20 @@
 
 Thiệp mời cưới một trang, phong cách cute pastel. React + Vite + Tailwind + Framer Motion, deploy miễn phí trên Vercel.
 
+**Production:** https://maedayohsuke-giahan.site
+
 ## Tính năng
 
 - Mở thiệp + nhạc nền (user gesture)
 - Đếm ngược ngày cưới
 - Lời mời & chi tiết sự kiện
 - Bản đồ Google Maps + chỉ đường
-- Form RSVP & sổ lời chúc (Supabase)
+- Form RSVP & sổ lời chúc → **Google Sheets**
 - OG meta cho share Zalo/Facebook
 
 ## Bắt đầu nhanh
 
 ```bash
-cd wedding-app
 npm install
 npm run dev
 ```
@@ -31,30 +32,32 @@ Thay ảnh & nhạc:
 - `public/images/og-image.jpg` — ảnh preview khi share
 - `public/music/wedding-song.mp3` — nhạc nền
 
-## Supabase (RSVP & lời chúc)
+## Google Sheets (RSVP & lời chúc)
 
-1. Tạo project miễn phí tại [supabase.com](https://supabase.com)
-2. Chạy SQL trong `supabase/schema.sql`
-3. Copy URL và anon key vào `.env`:
+Xem hướng dẫn chi tiết: [`google-apps-script/README.md`](google-apps-script/README.md)
+
+Tóm tắt:
+
+1. Tạo Google Sheet + dán code từ `google-apps-script/Code.gs`
+2. Chạy `setupSheets()` → Deploy Web app (Anyone)
+3. Thêm vào `.env`:
 
 ```env
-VITE_SUPABASE_URL=https://xxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_GOOGLE_SHEETS_URL=https://script.google.com/macros/s/XXXX/exec
 ```
 
-4. Restart dev server
+4. Trên Vercel: thêm cùng biến môi trường → Redeploy
 
-Không có `.env` → app chạy **demo mode** (form vẫn hoạt động, dữ liệu không lưu).
+Không có URL → **demo mode** (form vẫn hoạt động, dữ liệu không lưu).
+
+Dữ liệu khách nằm trong Sheet — tab **RSVP** và **Loi_chuc**.
 
 ## Deploy Vercel
 
 1. Push repo lên GitHub
-2. [vercel.com](https://vercel.com) → Import project → Root: `wedding-app`
-3. Framework: Vite
-4. Thêm env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-5. Deploy
-
-Build local:
+2. Import trên [vercel.com](https://vercel.com)
+3. Thêm `VITE_GOOGLE_SHEETS_URL`
+4. Deploy
 
 ```bash
 npm run build
@@ -64,12 +67,7 @@ npm run preview
 ## Cấu trúc
 
 ```
-src/
-  data/wedding.config.ts   # Nội dung thiệp
-  components/sections/       # Hero, Countdown, RSVP, ...
-  lib/supabase.ts          # API client
+src/data/wedding.config.ts    # Nội dung thiệp
+src/lib/sheets.ts             # Gửi/đọc Google Sheets
+google-apps-script/Code.gs    # Script gắn vào Sheet
 ```
-
-## License
-
-Private — dùng cho đám cưới của bạn.

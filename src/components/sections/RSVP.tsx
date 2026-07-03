@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { isSupabaseConfigured, submitRsvp } from '../../lib/supabase'
+import { isSheetsConfigured, submitRsvp } from '../../lib/sheets'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Input } from '../ui/Input'
@@ -70,9 +70,9 @@ export function RSVP() {
 
         <ScrollReveal delay={0.1}>
           <Card>
-            {!isSupabaseConfigured && (
+            {!isSheetsConfigured && (
               <p className="mb-4 rounded-2xl bg-lavender/40 px-4 py-3 text-sm text-text-muted">
-                Demo mode: cấu hình Supabase trong file <code>.env</code> để lưu RSVP thật.
+                Demo mode: cấu hình Google Sheets URL trong file <code>.env</code> để lưu RSVP thật.
               </p>
             )}
 

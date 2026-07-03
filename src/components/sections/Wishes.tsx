@@ -4,10 +4,10 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import {
   fetchWishes,
-  isSupabaseConfigured,
+  isSheetsConfigured,
   submitWish,
   type WishRecord,
-} from '../../lib/supabase'
+} from '../../lib/sheets'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Input } from '../ui/Input'
@@ -36,7 +36,7 @@ export function Wishes() {
   const [errorMessage, setErrorMessage] = useState('')
 
   const loadWishes = useCallback(async () => {
-    if (!isSupabaseConfigured) {
+    if (!isSheetsConfigured) {
       setWishes([
         {
           id: 'demo-1',
@@ -104,9 +104,9 @@ export function Wishes() {
 
         <ScrollReveal delay={0.1}>
           <Card>
-            {!isSupabaseConfigured && (
+            {!isSheetsConfigured && (
               <p className="mb-4 rounded-2xl bg-lavender/40 px-4 py-3 text-sm text-text-muted">
-                Demo mode: hiển thị lời chúc mẫu. Cấu hình Supabase để lưu lời chúc thật.
+                Demo mode: hiển thị lời chúc mẫu. Cấu hình Google Sheets để lưu lời chúc thật.
               </p>
             )}
 
