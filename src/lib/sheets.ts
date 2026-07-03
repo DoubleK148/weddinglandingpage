@@ -37,19 +37,55 @@ const DEMO_WISHES: WishRecord[] = [
   },
 ]
 
-async function postToSheet(payload: Record<string, unknown>) {
+/** Gửi qua hidden iframe — cách ổn định nhất với Google Apps Script */
+function postToSheet(payload: Record<string, unknown>): Promise<void> {
   if (!SHEETS_URL) {
-    await new Promise((resolve) => setTimeout(resolve, 600))
-    console.info('[demo] Sheet submission:', payload)
-    return
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        console.info('[demo] Sheet submission:', payload)
+        resolve()
+      }, 600)
+    })
   }
 
-  // text/plain + no-cors: tránh CORS khi gọi Google Apps Script từ domain khác
-  await fetch(SHEETS_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload),
+  return new Promise((resolve, reject) => {
+    const frameName = `sheet_frame_${Date.now()}`
+    const iframe = document.createElement('iframe')
+    iframe.name = frameName
+    iframe.style.display = 'none'
+    iframe.setAttribute('aria-hidden', 'true')
+
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = SHEETS_URL
+    form.target = frameName
+    form.style.display = 'none'
+
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = 'payload'
+    input.value = JSON.stringify(payload)
+    form.appendChild(input)
+
+    const cleanup = () => {
+      form.remove()
+      iframe.remove()
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      cleanup()
+      resolve()
+    }, 2500)
+
+    iframe.onerror = () => {
+      window.clearTimeout(timeoutId)
+      cleanup()
+      reject(new Error('Không gửi được dữ liệu. Vui lòng thử lại sau.'))
+    }
+
+    document.body.appendChild(iframe)
+    document.body.appendChild(form)
+    form.submit()
   })
 }
 

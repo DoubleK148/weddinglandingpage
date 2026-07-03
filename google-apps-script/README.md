@@ -1,53 +1,60 @@
 # Hướng dẫn Google Sheets
 
-Dữ liệu RSVP và lời chúc sẽ lưu vào **Google Sheet** của bạn.
+Dữ liệu RSVP và lời chúc lưu vào **Google Sheet** của bạn.
 
 ## Bước 1 — Tạo Sheet
 
-1. Vào [Google Sheets](https://sheets.google.com) → **Tạo bảng tính mới**
-2. Đặt tên ví dụ: `Thiệp cưới - Minh & Lan`
+1. [Google Sheets](https://sheets.google.com) → **Tạo bảng tính mới**
+2. Đặt tên: `Thiệp cưới - Minh & Lan`
 
-## Bước 2 — Gắn Apps Script
+## Bước 2 — Gắn Apps Script (quan trọng)
 
-1. Trong Sheet: **Extensions** → **Apps Script**
-2. Xóa code mặc định, dán toàn bộ nội dung file [`Code.gs`](./Code.gs)
+**Phải mở Apps Script từ đúng Sheet đang xem** — không tạo project riêng.
+
+1. Trong Sheet đó: **Extensions (Tiện ích mở rộng)** → **Apps Script**
+2. Xóa code mặc định, dán toàn bộ [`Code.gs`](./Code.gs)
 3. **Save** (Ctrl+S)
-4. Chọn hàm `setupSheets` → **Run** → cho phép quyền Google
-5. Quay lại Sheet — sẽ có 2 tab: **RSVP** và **Loi_chuc**
+4. Chọn hàm **`setupSheets`** → **Run (Chạy)** → cho phép quyền
+
+**Kiểm tra:** quay lại Sheet — phải thấy 2 tab mới:
+- **RSVP**
+- **Loi_chuc**
+
+Nếu vẫn chỉ có `Trang tính1` → script chưa gắn đúng Sheet hoặc chưa chạy `setupSheets`.
 
 ## Bước 3 — Deploy Web App
 
-1. Apps Script → **Deploy** → **New deployment**
-2. Loại: **Web app**
-3. **Execute as:** Me
-4. **Who has access:** Anyone
-5. **Deploy** → copy **Web app URL** (dạng `https://script.google.com/macros/s/.../exec`)
+1. **Deploy** → **New deployment** → **Web app**
+2. **Execute as:** Me (Tôi)
+3. **Who has access:** **Anyone** (Bất kỳ ai)
+4. **Deploy** → copy URL `/exec`
 
-## Bước 4 — Cấu hình thiệp
+Sau khi sửa code, luôn **New version** rồi Deploy lại.
 
-**Local** — tạo file `.env`:
+## Bước 4 — Cấu hình Vercel
 
-```env
+Environment variable:
+
+```
 VITE_GOOGLE_SHEETS_URL=https://script.google.com/macros/s/XXXX/exec
 ```
 
-**Vercel** — Environment Variables:
-
-| Tên | Giá trị |
-|-----|---------|
-| `VITE_GOOGLE_SHEETS_URL` | URL Web app ở bước 3 |
-
-Sau đó **Redeploy** project.
+→ **Redeploy**
 
 ## Xem dữ liệu khách
 
 | Tab | Nội dung |
 |-----|----------|
 | **RSVP** | Họ tên, SĐT, số người, có/không đến, lời nhắn |
-| **Loi_chuc** | Tên, lời chúc, cột **Hiển thị** |
+| **Loi_chuc** | Tên, lời chúc, **Hiển thị** |
 
-**Ẩn lời chúc trên web:** đổi cột **Hiển thị** thành `Không`.
+## Sheet vẫn trống?
+
+1. Chạy lại **`setupSheets`** — phải thấy tab RSVP + Loi_chuc
+2. Deploy lại Web app: **Anyone** + **New version**
+3. Gửi thử form trên site → refresh Sheet (F5)
+4. Kiểm tra Apps Script → **Executions** — có log lỗi không
 
 ## Chia sẻ Sheet
 
-Google Sheet → **Share** → thêm email người cần xem RSVP.
+**Share** → thêm email người nhà cần xem RSVP.
