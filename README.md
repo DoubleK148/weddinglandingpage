@@ -11,6 +11,7 @@ Thiệp mời cưới một trang, phong cách cute pastel. React + Vite + Tailw
 - Lời mời & chi tiết sự kiện
 - Bản đồ Google Maps + chỉ đường
 - Form RSVP & sổ lời chúc → **Google Sheets**
+- **Link cá nhân** cho từng khách (`/ban-a`, `/co-lan`, ...)
 - OG meta cho share Zalo/Facebook
 
 ## Bắt đầu nhanh
@@ -25,6 +26,25 @@ Mở http://localhost:5173
 ## Đổi nội dung thiệp
 
 Chỉnh file **`src/data/wedding.config.ts`** — tên, ngày giờ, địa điểm, lời mời, v.v.
+
+## Link mời cá nhân
+
+Chỉnh danh sách khách trong **`src/data/guests.config.ts`**:
+
+```typescript
+{ slug: 'ban-a', displayName: 'Bạn A', fullName: 'Nguyễn Văn A' },
+```
+
+Link gửi cho khách:
+
+```
+https://maedayohsuke-giahan.site/ban-a
+https://maedayohsuke-giahan.site/co-lan
+```
+
+- Mở thiệp hiện **"Gửi tới Bạn A"**
+- Form RSVP / lời chúc **tự điền tên**
+- Slug chưa có trong danh sách vẫn hoạt động (tự format từ URL, vd. `/chi-pu` → "Chi Pu")
 
 Thay ảnh & nhạc:
 

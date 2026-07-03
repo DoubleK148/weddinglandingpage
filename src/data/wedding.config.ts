@@ -15,6 +15,7 @@ export const weddingConfig = {
       'Trân trọng kính mời bạn đến dự lễ thành hôn của chúng tôi. Hãy cùng chia sẻ niềm vui trong ngày trọng đại!',
     hashtag: '#MinhVaLan2026',
     ogImage: '/images/og-image.svg',
+    siteUrl: 'https://maedayohsuke-giahan.site',
   },
 
   couple: {

@@ -1,8 +1,10 @@
+import { useWedding } from '../../context/WeddingContext'
 import { weddingConfig } from '../../data/wedding.config'
 import { Card } from '../ui/Card'
 import { ScrollReveal } from '../ui/ScrollReveal'
 
 export function Invitation() {
+  const { guest } = useWedding()
   const { groom, bride } = weddingConfig.couple
 
   return (
@@ -13,6 +15,15 @@ export function Invitation() {
             <p className="font-display text-2xl text-pink-soft italic sm:text-3xl">
               {weddingConfig.invitation.greeting}
             </p>
+
+            {guest && (
+              <p className="mt-4 text-lg font-semibold text-text">
+                Kính gửi{' '}
+                <span className="font-display text-2xl text-pink-soft italic">
+                  {guest.displayName}
+                </span>
+              </p>
+            )}
 
             <div className="my-8 space-y-1">
               <p className="text-lg font-semibold text-text">{groom.fullName}</p>

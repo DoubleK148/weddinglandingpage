@@ -2,6 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { useWedding } from '../../context/WeddingContext'
+import { getPrefillName } from '../../data/guests.config'
 import { isSheetsConfigured, submitRsvp } from '../../lib/sheets'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
@@ -23,6 +25,8 @@ const rsvpSchema = z.object({
 type RsvpFormData = z.infer<typeof rsvpSchema>
 
 export function RSVP() {
+  const { guest } = useWedding()
+  const prefillName = getPrefillName(guest)
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -34,6 +38,7 @@ export function RSVP() {
   } = useForm<RsvpFormData>({
     resolver: zodResolver(rsvpSchema),
     defaultValues: {
+      name: prefillName,
       guest_count: 1,
       attending: 'yes',
     },
@@ -52,7 +57,7 @@ export function RSVP() {
         message: data.message || undefined,
       })
       setStatus('success')
-      reset({ guest_count: 1, attending: 'yes' })
+      reset({ name: prefillName, guest_count: 1, attending: 'yes' })
     } catch (err) {
       setStatus('error')
       setErrorMessage(err instanceof Error ? err.message : 'Đã có lỗi xảy ra')

@@ -8,6 +8,8 @@ import {
   submitWish,
   type WishRecord,
 } from '../../lib/sheets'
+import { useWedding } from '../../context/WeddingContext'
+import { getPrefillName } from '../../data/guests.config'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 import { Input } from '../ui/Input'
@@ -30,6 +32,8 @@ function formatWishDate(iso: string) {
 }
 
 export function Wishes() {
+  const { guest } = useWedding()
+  const prefillName = getPrefillName(guest)
   const [wishes, setWishes] = useState<WishRecord[]>([])
   const [loadingWishes, setLoadingWishes] = useState(true)
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -76,6 +80,9 @@ export function Wishes() {
     formState: { errors },
   } = useForm<WishFormData>({
     resolver: zodResolver(wishSchema),
+    defaultValues: {
+      name: prefillName,
+    },
   })
 
   const onSubmit = async (data: WishFormData) => {

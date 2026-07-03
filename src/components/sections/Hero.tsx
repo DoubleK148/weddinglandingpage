@@ -13,7 +13,7 @@ function formatWeddingDate(iso: string) {
 }
 
 export function Hero() {
-  const { isOpened, openInvitation } = useWedding()
+  const { isOpened, openInvitation, guest } = useWedding()
   const reduceMotion = useReducedMotion()
   const { groom, bride } = weddingConfig.couple
   const mainEvent = weddingConfig.events[1] ?? weddingConfig.events[0]
@@ -86,10 +86,18 @@ export function Hero() {
               <EnvelopeIcon />
             </motion.div>
             <h2 className="font-display text-3xl text-text italic">
-              Bạn nhận được một thiệp mời
+              {guest ? (
+                <>
+                  Gửi tới <span className="text-pink-soft">{guest.displayName}</span>
+                </>
+              ) : (
+                'Bạn nhận được một thiệp mời'
+              )}
             </h2>
             <p className="mt-3 text-text-muted">
-              Chạm để mở thiệp và bật nhạc nền nhé
+              {guest
+                ? 'Bạn được trân trọng mời đến dự lễ thành hôn của chúng tôi. Chạm để mở thiệp nhé!'
+                : 'Chạm để mở thiệp và bật nhạc nền nhé'}
             </p>
             <Button className="mt-8" onClick={openInvitation}>
               Mở thiệp

@@ -2,14 +2,17 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from 'react'
+import { type Guest, parseGuestFromPath } from '../data/guests.config'
 import { weddingConfig } from '../data/wedding.config'
 
 interface WeddingContextValue {
+  guest: Guest | null
   isOpened: boolean
   openInvitation: () => void
   isMusicPlaying: boolean
@@ -21,9 +24,16 @@ interface WeddingContextValue {
 const WeddingContext = createContext<WeddingContextValue | null>(null)
 
 export function WeddingProvider({ children }: { children: ReactNode }) {
+  const guest = useMemo(() => parseGuestFromPath(), [])
   const [isOpened, setIsOpened] = useState(false)
   const [isMusicPlaying, setIsMusicPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    if (guest) {
+      document.title = `${weddingConfig.meta.title} — ${guest.displayName}`
+    }
+  }, [guest])
 
   const openInvitation = useCallback(() => {
     setIsOpened(true)
@@ -49,6 +59,7 @@ export function WeddingProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
+      guest,
       isOpened,
       openInvitation,
       isMusicPlaying,
@@ -56,7 +67,7 @@ export function WeddingProvider({ children }: { children: ReactNode }) {
       musicSrc: weddingConfig.media.musicSrc,
       audioRef,
     }),
-    [isOpened, openInvitation, isMusicPlaying, toggleMusic],
+    [guest, isOpened, openInvitation, isMusicPlaying, toggleMusic],
   )
 
   return (
