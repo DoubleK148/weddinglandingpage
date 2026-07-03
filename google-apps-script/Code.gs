@@ -1,17 +1,55 @@
 /**
  * Google Apps Script — thiệp cưới → Google Sheets
  *
- * SPREADSHEET_ID: lấy từ URL Sheet của bạn
- * Deploy Web app: Execute as Me, Who has access: Anyone
+ * THỨ TỰ CHẠY (từ Sheet → Extensions → Apps Script):
+ * 1. linkThisSheet()   ← chạy đầu tiên, 1 lần duy nhất
+ * 2. testWrite()       ← kiểm tra ghi dữ liệu
+ * 3. Deploy Web app (Me + Anyone) → New version
  */
 
-const SPREADSHEET_ID = '1GxXQWVRBoClY4hvbHS4jL6rPPac4GiB5TdK-QuLFLHo'
+const FALLBACK_SPREADSHEET_ID = '1GxXQWVRBoClY4hvbHS4jL6rPPac4GiB5TdK-QuLFLHo'
 
 const RSVP_SHEET = 'RSVP'
 const WISHES_SHEET = 'Loi_chuc'
 
+function getSpreadsheetId() {
+  const saved = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID')
+  if (saved) return saved
+
+  try {
+    const active = SpreadsheetApp.getActiveSpreadsheet()
+    if (active) return active.getId()
+  } catch (e) {
+    // Web app context — không có active spreadsheet
+  }
+
+  return FALLBACK_SPREADSHEET_ID
+}
+
 function getSpreadsheet() {
-  return SpreadsheetApp.openById(SPREADSHEET_ID)
+  return SpreadsheetApp.openById(getSpreadsheetId())
+}
+
+/** Bước 1 — Chạy hàm này TRƯỚC, từ Sheet đang mở (Extensions → Apps Script) */
+function linkThisSheet() {
+  const active = SpreadsheetApp.getActiveSpreadsheet()
+  if (!active) {
+    throw new Error(
+      'Không tìm thấy Sheet. Hãy mở Google Sheet → Extensions → Apps Script, KHÔNG tạo project riêng trên script.google.com',
+    )
+  }
+
+  const id = active.getId()
+  const name = active.getName()
+  PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', id)
+
+  const first = active.getSheets()[0]
+  first.getRange('A1').setValue('✅ Đã liên kết Apps Script — ' + new Date())
+  first.getRange('A2').setValue('ID: ' + id)
+
+  SpreadsheetApp.getUi().alert(
+    'Liên kết thành công!\n\nSheet: ' + name + '\nID: ' + id + '\n\nTiếp theo chạy testWrite()',
+  )
 }
 
 function setupSheets() {
@@ -32,9 +70,12 @@ function setupSheets() {
   }
 }
 
+/** Bước 2 — Chạy sau linkThisSheet() */
 function testWrite() {
+  const ss = getSpreadsheet()
   setupSheets()
-  getSpreadsheet().getSheetByName(RSVP_SHEET).appendRow([
+
+  ss.getSheetByName(RSVP_SHEET).appendRow([
     new Date(),
     'TEST OK',
     '',
@@ -42,6 +83,17 @@ function testWrite() {
     'Có',
     'Chạy testWrite() từ Apps Script',
   ])
+
+  const first = ss.getSheets()[0]
+  first.getRange('A3').setValue('✅ testWrite OK — ' + new Date())
+
+  SpreadsheetApp.getUi().alert(
+    'Ghi thành công!\n\nSheet: ' +
+      ss.getName() +
+      '\nID: ' +
+      ss.getId() +
+      '\n\n→ Xem tab RSVP (dòng TEST OK)\n→ Xem ô A3 tab đầu tiên',
+  )
 }
 
 function writeSubmission(data) {
@@ -151,7 +203,11 @@ function doGet(e) {
       return jsonResponse(writeSubmission(data), callback)
     }
 
-    return jsonResponse({ ok: true, message: 'Wedding sheet API', spreadsheetId: SPREADSHEET_ID })
+    return jsonResponse({
+      ok: true,
+      message: 'Wedding sheet API',
+      spreadsheetId: getSpreadsheetId(),
+    })
   } catch (err) {
     return jsonResponse({ success: false, error: String(err) }, callback)
   }
