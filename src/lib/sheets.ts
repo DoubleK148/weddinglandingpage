@@ -44,18 +44,13 @@ async function postToSheet(payload: Record<string, unknown>) {
     return
   }
 
-  const body = new URLSearchParams()
-  body.append('payload', JSON.stringify(payload))
-
-  const response = await fetch(SHEETS_URL, {
+  // text/plain + no-cors: tránh CORS khi gọi Google Apps Script từ domain khác
+  await fetch(SHEETS_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
   })
-
-  if (!response.ok) {
-    throw new Error('Không gửi được dữ liệu. Vui lòng thử lại sau.')
-  }
 }
 
 export async function submitRsvp(data: RsvpPayload) {

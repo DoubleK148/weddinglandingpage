@@ -7,7 +7,7 @@
  * 3. Chạy hàm setupSheets() một lần (cho phép quyền)
  * 4. Deploy → New deployment → Web app
  *    - Execute as: Me
- *    - Who has access: Anyone
+ *    - Who has access: Anyone (Bất kỳ ai — KHÔNG chọn "Anyone with Google account")
  * 5. Copy URL deployment → dán vào VITE_GOOGLE_SHEETS_URL
  */
 
