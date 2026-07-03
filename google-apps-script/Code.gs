@@ -46,10 +46,10 @@ function linkThisSheet() {
   const first = active.getSheets()[0]
   first.getRange('A1').setValue('✅ Đã liên kết Apps Script — ' + new Date())
   first.getRange('A2').setValue('ID: ' + id)
+  first.getRange('A3').setValue('Sheet: ' + name)
+  first.getRange('A4').setValue('→ Tiếp theo chạy testWrite() trong Apps Script')
 
-  SpreadsheetApp.getUi().alert(
-    'Liên kết thành công!\n\nSheet: ' + name + '\nID: ' + id + '\n\nTiếp theo chạy testWrite()',
-  )
+  Logger.log('linkThisSheet OK — ' + name + ' — ' + id)
 }
 
 function setupSheets() {
@@ -85,15 +85,10 @@ function testWrite() {
   ])
 
   const first = ss.getSheets()[0]
-  first.getRange('A3').setValue('✅ testWrite OK — ' + new Date())
+  first.getRange('A5').setValue('✅ testWrite OK — ' + new Date())
+  first.getRange('A6').setValue('→ Xem tab RSVP, dòng TEST OK')
 
-  SpreadsheetApp.getUi().alert(
-    'Ghi thành công!\n\nSheet: ' +
-      ss.getName() +
-      '\nID: ' +
-      ss.getId() +
-      '\n\n→ Xem tab RSVP (dòng TEST OK)\n→ Xem ô A3 tab đầu tiên',
-  )
+  Logger.log('testWrite OK — ' + ss.getName() + ' — ' + ss.getId())
 }
 
 function writeSubmission(data) {
