@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Baloo 2', system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --color-cream: #fff8f0;
+  --color-blush: #ffe4ec;
+  --color-pink-soft: #f5afc4;
+  --color-lavender: #e8d5f2;
+  --color-text: #5c4a4a;
+  --color-text-muted: #8a7575;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    @apply m-0 bg-cream font-sans text-text antialiased;
+  }
+}

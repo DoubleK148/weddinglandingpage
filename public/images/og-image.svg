@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFF8F0"/>
+      <stop offset="50%" style="stop-color:#FFE4EC"/>
+      <stop offset="100%" style="stop-color:#E8D5F2"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="600" y="260" text-anchor="middle" font-family="Georgia, serif" font-size="72" font-style="italic" fill="#5C4A4A">Minh &amp; Lan</text>
+  <text x="600" y="340" text-anchor="middle" font-family="sans-serif" font-size="32" fill="#8A7575">Thi«p C∞€i Online</text>
+  <text x="600" y="400" text-anchor="middle" font-family="sans-serif" font-size="24" fill="#F5AFC4">20.12.2026</text>
+  <path d="M560 450c0-22 18-40 40-40s40 18 40 40-18 40-40 40-40-18-40-40z" fill="#F5AFC4" opacity="0.4"/>
+</svg>
