@@ -1,16 +1,10 @@
 /**
- * Google Apps Script — gắn vào Google Sheet thiệp cưới
+ * Google Apps Script — thiệp cưới → Google Sheets
  *
- * QUAN TRỌNG: Web App KHÔNG dùng được getActiveSpreadsheet().
- * Phải khai báo SPREADSHEET_ID (lấy từ URL Sheet).
- *
- * Sau khi dán code:
- * 1. Chạy setupSheets() một lần
- * 2. Deploy → New deployment → Web app (Execute as: Me, Anyone)
- * 3. Copy URL /exec → VITE_GOOGLE_SHEETS_URL trên Vercel
+ * SPREADSHEET_ID: lấy từ URL Sheet của bạn
+ * Deploy Web app: Execute as Me, Who has access: Anyone
  */
 
-// ← ID Sheet của bạn (từ URL docs.google.com/spreadsheets/d/XXXX/edit)
 const SPREADSHEET_ID = '1GxXQWVRBoClY4hvbHS4jL6rPPac4GiB5TdK-QuLFLHo'
 
 const RSVP_SHEET = 'RSVP'
@@ -24,25 +18,20 @@ function setupSheets() {
   const ss = getSpreadsheet()
 
   let rsvp = ss.getSheetByName(RSVP_SHEET)
-  if (!rsvp) {
-    rsvp = ss.insertSheet(RSVP_SHEET)
-  }
+  if (!rsvp) rsvp = ss.insertSheet(RSVP_SHEET)
   if (rsvp.getLastRow() === 0) {
     rsvp.appendRow(['Thời gian', 'Họ tên', 'SĐT', 'Số người', 'Tham dự', 'Lời nhắn'])
     rsvp.getRange(1, 1, 1, 6).setFontWeight('bold')
   }
 
   let wishes = ss.getSheetByName(WISHES_SHEET)
-  if (!wishes) {
-    wishes = ss.insertSheet(WISHES_SHEET)
-  }
+  if (!wishes) wishes = ss.insertSheet(WISHES_SHEET)
   if (wishes.getLastRow() === 0) {
     wishes.appendRow(['Thời gian', 'Tên', 'Lời chúc', 'Hiển thị'])
     wishes.getRange(1, 1, 1, 4).setFontWeight('bold')
   }
 }
 
-/** Chạy thủ công để test — nếu Sheet có dòng "TEST OK" là đúng */
 function testWrite() {
   setupSheets()
   getSpreadsheet().getSheetByName(RSVP_SHEET).appendRow([
@@ -55,6 +44,36 @@ function testWrite() {
   ])
 }
 
+function writeSubmission(data) {
+  setupSheets()
+  const ss = getSpreadsheet()
+  const now = new Date()
+
+  if (data.type === 'rsvp') {
+    ss.getSheetByName(RSVP_SHEET).appendRow([
+      now,
+      data.name || '',
+      data.phone || '',
+      Number(data.guest_count) || 1,
+      data.attending === true || data.attending === 'true' ? 'Có' : 'Không',
+      data.message || '',
+    ])
+    return { success: true, type: 'rsvp' }
+  }
+
+  if (data.type === 'wish') {
+    ss.getSheetByName(WISHES_SHEET).appendRow([
+      now,
+      data.name || '',
+      data.message || '',
+      'Có',
+    ])
+    return { success: true, type: 'wish' }
+  }
+
+  throw new Error('Unknown type: ' + data.type)
+}
+
 function parsePayload(e) {
   if (e.parameter && e.parameter.payload) {
     return JSON.parse(e.parameter.payload)
@@ -65,40 +84,33 @@ function parsePayload(e) {
   throw new Error('Missing payload')
 }
 
+function parseGetSubmission(params) {
+  return {
+    type: params.type,
+    name: params.name || '',
+    phone: params.phone || '',
+    guest_count: Number(params.guest_count) || 1,
+    attending: params.attending === 'true',
+    message: params.message || '',
+  }
+}
+
+function jsonResponse(data, callback) {
+  const json = JSON.stringify(data)
+  if (callback) {
+    return ContentService.createTextOutput(callback + '(' + json + ')').setMimeType(
+      ContentService.MimeType.JAVASCRIPT,
+    )
+  }
+  return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON)
+}
+
 function doPost(e) {
   try {
-    setupSheets()
-    const data = parsePayload(e)
-    const ss = getSpreadsheet()
-    const now = new Date()
-
-    if (data.type === 'rsvp') {
-      ss.getSheetByName(RSVP_SHEET).appendRow([
-        now,
-        data.name || '',
-        data.phone || '',
-        data.guest_count || 1,
-        data.attending ? 'Có' : 'Không',
-        data.message || '',
-      ])
-    } else if (data.type === 'wish') {
-      ss.getSheetByName(WISHES_SHEET).appendRow([
-        now,
-        data.name || '',
-        data.message || '',
-        'Có',
-      ])
-    } else {
-      throw new Error('Unknown type: ' + data.type)
-    }
-
-    return ContentService.createTextOutput(
-      JSON.stringify({ success: true }),
-    ).setMimeType(ContentService.MimeType.JSON)
+    const data = e.parameter && e.parameter.type ? parseGetSubmission(e.parameter) : parsePayload(e)
+    return jsonResponse(writeSubmission(data))
   } catch (err) {
-    return ContentService.createTextOutput(
-      JSON.stringify({ success: false, error: String(err) }),
-    ).setMimeType(ContentService.MimeType.JSON)
+    return jsonResponse({ success: false, error: String(err) })
   }
 }
 
@@ -111,9 +123,7 @@ function getWishesList() {
   for (let i = rows.length - 1; i >= 1; i--) {
     const row = rows[i]
     const visible = String(row[3] || 'Có').toLowerCase()
-    if (visible === 'không' || visible === 'false' || visible === '0') {
-      continue
-    }
+    if (visible === 'không' || visible === 'false' || visible === '0') continue
     wishes.push({
       id: String(i),
       name: String(row[1] || ''),
@@ -127,20 +137,22 @@ function getWishesList() {
 }
 
 function doGet(e) {
-  const action = e.parameter.action
-  const callback = e.parameter.callback
+  const params = e.parameter
+  const callback = params.callback
+  const action = params.action
 
-  if (action === 'wishes') {
-    const json = JSON.stringify(getWishesList())
-    if (callback) {
-      return ContentService.createTextOutput(callback + '(' + json + ')').setMimeType(
-        ContentService.MimeType.JAVASCRIPT,
-      )
+  try {
+    if (action === 'wishes') {
+      return jsonResponse(getWishesList(), callback)
     }
-    return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON)
-  }
 
-  return ContentService.createTextOutput(
-    JSON.stringify({ ok: true, message: 'Wedding sheet API', spreadsheetId: SPREADSHEET_ID }),
-  ).setMimeType(ContentService.MimeType.JSON)
+    if (action === 'submit' || params.type) {
+      const data = parseGetSubmission(params)
+      return jsonResponse(writeSubmission(data), callback)
+    }
+
+    return jsonResponse({ ok: true, message: 'Wedding sheet API', spreadsheetId: SPREADSHEET_ID })
+  } catch (err) {
+    return jsonResponse({ success: false, error: String(err) }, callback)
+  }
 }

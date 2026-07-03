@@ -37,75 +37,14 @@ const DEMO_WISHES: WishRecord[] = [
   },
 ]
 
-/** Gửi qua hidden iframe — cách ổn định nhất với Google Apps Script */
-function postToSheet(payload: Record<string, unknown>): Promise<void> {
+function jsonpRequest<T>(params: Record<string, string>): Promise<T> {
   if (!SHEETS_URL) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.info('[demo] Sheet submission:', payload)
-        resolve()
-      }, 600)
-    })
+    return Promise.reject(new Error('Sheets URL chưa cấu hình'))
   }
 
   return new Promise((resolve, reject) => {
-    const frameName = `sheet_frame_${Date.now()}`
-    const iframe = document.createElement('iframe')
-    iframe.name = frameName
-    iframe.style.display = 'none'
-    iframe.setAttribute('aria-hidden', 'true')
-
-    const form = document.createElement('form')
-    form.method = 'POST'
-    form.action = SHEETS_URL
-    form.target = frameName
-    form.style.display = 'none'
-
-    const input = document.createElement('input')
-    input.type = 'hidden'
-    input.name = 'payload'
-    input.value = JSON.stringify(payload)
-    form.appendChild(input)
-
-    const cleanup = () => {
-      form.remove()
-      iframe.remove()
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      cleanup()
-      resolve()
-    }, 2500)
-
-    iframe.onerror = () => {
-      window.clearTimeout(timeoutId)
-      cleanup()
-      reject(new Error('Không gửi được dữ liệu. Vui lòng thử lại sau.'))
-    }
-
-    document.body.appendChild(iframe)
-    document.body.appendChild(form)
-    form.submit()
-  })
-}
-
-export async function submitRsvp(data: RsvpPayload) {
-  await postToSheet({ type: 'rsvp', ...data })
-}
-
-export async function submitWish(data: WishPayload) {
-  await postToSheet({ type: 'wish', ...data })
-}
-
-export function fetchWishes(): Promise<WishRecord[]> {
-  if (!SHEETS_URL) {
-    return Promise.resolve(DEMO_WISHES)
-  }
-
-  return new Promise((resolve, reject) => {
-    const callbackName = `__wishes_${Date.now()}`
+    const callbackName = `__sheet_${Date.now()}_${Math.random().toString(36).slice(2)}`
     let script: HTMLScriptElement | null = null
-
     const win = window as unknown as Record<string, unknown>
 
     const cleanup = () => {
@@ -116,21 +55,71 @@ export function fetchWishes(): Promise<WishRecord[]> {
 
     const timeoutId = window.setTimeout(() => {
       cleanup()
-      reject(new Error('Không tải được lời chúc'))
-    }, 12000)
+      reject(new Error('Không kết nối được Google Sheet'))
+    }, 15000)
 
-    win[callbackName] = (data: WishRecord[]) => {
+    win[callbackName] = (data: T) => {
       cleanup()
-      resolve(Array.isArray(data) ? data : [])
+      resolve(data)
     }
 
+    const search = new URLSearchParams({ ...params, callback: callbackName })
     script = document.createElement('script')
     const separator = SHEETS_URL.includes('?') ? '&' : '?'
-    script.src = `${SHEETS_URL}${separator}action=wishes&callback=${callbackName}`
+    script.src = `${SHEETS_URL}${separator}${search.toString()}`
     script.onerror = () => {
       cleanup()
-      reject(new Error('Không tải được lời chúc'))
+      reject(new Error('Không kết nối được Google Sheet'))
     }
     document.body.appendChild(script)
   })
+}
+
+export async function submitRsvp(data: RsvpPayload) {
+  if (!SHEETS_URL) {
+    await new Promise((r) => setTimeout(r, 600))
+    console.info('[demo] RSVP:', data)
+    return
+  }
+
+  const result = await jsonpRequest<{ success?: boolean; error?: string }>({
+    action: 'submit',
+    type: 'rsvp',
+    name: data.name,
+    phone: data.phone || '',
+    guest_count: String(data.guest_count),
+    attending: String(data.attending),
+    message: data.message || '',
+  })
+
+  if (result.error || result.success === false) {
+    throw new Error(result.error || 'Gửi thất bại')
+  }
+}
+
+export async function submitWish(data: WishPayload) {
+  if (!SHEETS_URL) {
+    await new Promise((r) => setTimeout(r, 600))
+    console.info('[demo] Wish:', data)
+    return
+  }
+
+  const result = await jsonpRequest<{ success?: boolean; error?: string }>({
+    action: 'submit',
+    type: 'wish',
+    name: data.name,
+    message: data.message,
+  })
+
+  if (result.error || result.success === false) {
+    throw new Error(result.error || 'Gửi thất bại')
+  }
+}
+
+export function fetchWishes(): Promise<WishRecord[]> {
+  if (!SHEETS_URL) return Promise.resolve(DEMO_WISHES)
+
+  return jsonpRequest<WishRecord[]>({ action: 'wishes' }).then((data) =>
+    Array.isArray(data) ? data : [],
+  )
 }
